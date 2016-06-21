@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+	
+	<groupId>com.bxtpw.common</groupId>
+	<artifactId>common-mybatis</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <packaging>jar</packaging>
+	
+	<properties>
+        <central.repo.url>http://192.168.0.175/nexus/content/groups/public/</central.repo.url>
+        <mvn.center.url>https://repo1.maven.org/maven2/</mvn.center.url>
+        <oschina.repo.url>http://maven.oschina.net/content/groups/public/</oschina.repo.url>
+        <privice.repo.url>http://192.168.0.175/nexus/content/groups/public/</privice.repo.url>
+        <repo.release.url>http://192.168.0.175/nexus/content/repositories/bxtpw-releases/</repo.release.url>
+        <repo.snapshots.url>http://192.168.0.175/nexus/content/repositories/bxtpw-snapshots/</repo.snapshots.url>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <source.version>1.7</source.version>
+        <target.version>1.7</target.version>
+        <compiler.version>1.7</compiler.version>
+        <junit.version>4.11</junit.version>
+        <spring.version>4.1.6.RELEASE</spring.version>
+        <cglib.version>3.1</cglib.version>
+        <aspectj.version>1.8.0</aspectj.version>
+        <oscache.version>2.4.1</oscache.version>
+        <mybatis.version>3.3.0</mybatis.version>
+        <mysql.connector.version>5.1.29</mysql.connector.version>
+        <mybatis.spring.version>1.2.0</mybatis.spring.version>
+        <aspectj.version>1.8.0</aspectj.version>
+        <c3p0.version>0.9.1.2</c3p0.version>
+        <pagerhelp.version>3.7.4</pagerhelp.version>
+        <c3p0.version>0.9.1.2</c3p0.version>
+	</properties>
+
+    <!-- 定义私有仓库 -->
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Centran repository</name>
+            <url>${central.repo.url}</url>
+        </repository>
+    </repositories>
+
+    <!--发布库 mvn clean deploy -->
+    <distributionManagement>
+        <repository>
+            <id>bxtpw-releases</id>
+            <name>Common Nexus Release Repository</name>
+            <url>${repo.release.url}</url>
+        </repository>
+        <snapshotRepository>
+            <id>bxtpw-snapshots</id>
+            <name>Common Nexus Snapshot Repository</name>
+            <url>${repo.snapshots.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.bxtpw.common</groupId>
+            <artifactId>common-supports</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- MyBatis 、spring mysql驱动相关 开始 -->
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis</artifactId>
+            <version>${mybatis.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>${mysql.connector.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mybatis</groupId>
+            <artifactId>mybatis-spring</artifactId>
+            <version>${mybatis.spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-jdbc</artifactId>
+            <version>${spring.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.aspectj</groupId>
+            <artifactId>aspectjweaver</artifactId>
+            <version>${aspectj.version}</version>
+        </dependency>
+        <!-- MyBatis 、spring mysql驱动相关 结束 -->
+
+        <!-- 数据库连接池 开始 -->
+        <dependency>
+            <groupId>c3p0</groupId>
+            <artifactId>c3p0</artifactId>
+            <version>${c3p0.version}</version>
+        </dependency>
+        <!-- 数据库连接池 结束 -->
+
+        <!-- BEG MyBatis 分页插件 -->
+        <dependency>
+            <groupId>com.github.pagehelper</groupId>
+            <artifactId>pagehelper</artifactId>
+            <version>${pagerhelp.version}</version>
+        </dependency>
+        <!-- END MyBatis 分页插件 -->
+    </dependencies>
+
+    <build>
+        <finalName>common-mybatis</finalName>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>${source.version}</source>
+                    <target>${target.version}</target>
+                    <compilerVersion>${compiler.version}</compilerVersion>
+                    <encoding>${project.build.sourceEncoding}</encoding>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.4.3</version>
+                <configuration>
+                    <encoding>UTF-8</encoding>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+            </plugin>
+
+            <!-- 部署源代码到私服 -->
+            <plugin>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.4</version>
+                <configuration>
+                    <attach>true</attach>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

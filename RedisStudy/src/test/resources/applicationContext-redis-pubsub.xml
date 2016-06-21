@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd">
+
+    <bean id="listenerAdapter" class="org.springframework.data.redis.listener.adapter.MessageListenerAdapter">
+        <property name="serializer">
+            <bean class="org.springframework.data.redis.serializer.JdkSerializationRedisSerializer"/>
+        </property>
+
+        <property name="delegate">
+            <bean class="edu.zhku.redis.test.spring.MessageDelegate"/>
+        </property>
+
+        <property name="defaultListenerMethod" value="handleMessage"/>
+    </bean>
+
+
+    <bean id="redisContainer" class="org.springframework.data.redis.listener.RedisMessageListenerContainer">
+        <property name="connectionFactory" ref="jedisConnectionFactory"/>
+        <property name="messageListeners">
+            <!-- map of listeners and their associated topics (channels or/and patterns) -->
+            <map>
+                <entry key-ref="listenerAdapter">
+                    <bean class="org.springframework.data.redis.listener.ChannelTopic">
+                        <constructor-arg value="java" />
+                    </bean>
+                </entry>
+            </map>
+        </property>
+    </bean>
+</beans>

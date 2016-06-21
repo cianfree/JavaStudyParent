@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-4.1.xsd">
+
+    <!-- 扫描控制器 mvc 层只扫描 controller注解的bean -->
+    <context:component-scan base-package="com.bxtpw.study">
+        <context:include-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+        <context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+    </context:component-scan>
+
+    <!-- 对静态资源文件的访问 方案一 （二选一）匹配的URL被当做静态资源，由Spring读出到内存中再由ResourceHttpRequestHandle响应http。 -->
+    <!--<mvc:resources mapping="/img/**" location="/img/" cache-period="31556926" />
+    <mvc:resources mapping="/css/**" location="/css/" cache-period="31556926" />
+    <mvc:resources mapping="/js/**" location="/js/" cache-period="31556926" />-->
+
+
+    <!-- web层相关的配置 -->
+    <!-- 配置JSP页面解析器，Spring其实可以支持多种显示，本例子使用jsp作为显示 -->
+    <bean name="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/"></property>
+        <property name="suffix" value=".jsp"></property>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+        <property name="order" value="2"></property>
+    </bean>
+</beans>

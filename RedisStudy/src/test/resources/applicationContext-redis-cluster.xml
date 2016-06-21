@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-4.0.xsd">
+
+    <context:property-placeholder location="classpath:redis.properties" ignore-unresolvable="true"/>
+
+    <!-- Jedis 连接池配置 -->
+    <bean id="jedisConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+        <property name="maxTotal" value="${redis.pool.maxTotal}"/>
+        <property name="maxIdle" value="${redis.pool.maxIdle}"/>
+        <property name="maxWaitMillis" value="${redis.pool.maxWaitMillis}"/>
+        <property name="testOnBorrow" value="${redis.pool.testOnBorrow}"/>
+    </bean>
+
+    <!-- 构建JedisCLuster实例 -->
+    <bean id="jedisCluster" class="redis.clients.jedis.JedisCluster">
+
+        <constructor-arg index="0">
+            <set>
+                <bean class="redis.clients.jedis.HostAndPort">
+                    <constructor-arg index="0" value="192.168.137.129"/>
+                    <constructor-arg index="1" value="7000"/>
+                </bean>
+                <bean class="redis.clients.jedis.HostAndPort">
+                    <constructor-arg index="0" value="192.168.137.129"/>
+                    <constructor-arg index="1" value="7001"/>
+                </bean>
+                <bean class="redis.clients.jedis.HostAndPort">
+                    <constructor-arg index="0" value="192.168.137.129"/>
+                    <constructor-arg index="1" value="7002"/>
+                </bean>
+                <bean class="redis.clients.jedis.HostAndPort">
+                    <constructor-arg index="0" value="192.168.137.129"/>
+                    <constructor-arg index="1" value="7003"/>
+                </bean>
+                <bean class="redis.clients.jedis.HostAndPort">
+                    <constructor-arg index="0" value="192.168.137.129"/>
+                    <constructor-arg index="1" value="7004"/>
+                </bean>
+                <bean class="redis.clients.jedis.HostAndPort">
+                    <constructor-arg index="0" value="192.168.137.129"/>
+                    <constructor-arg index="1" value="7005"/>
+                </bean>
+            </set>
+        </constructor-arg>
+        <constructor-arg index="1" type="int" value="5000"/>
+        <constructor-arg index="2" type="int" value="5000"/>
+        <constructor-arg index="3" type="int" value="10"/>
+        <constructor-arg index="4" type="org.apache.commons.pool2.impl.GenericObjectPoolConfig" ref="jedisConfig"/>
+    </bean>
+</beans>

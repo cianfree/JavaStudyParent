@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN 2.0//EN" "http://www.springframework.org/dtd/spring-beans-2.0.dtd">
+<beans default-autowire="byName">
+
+    <!-- 通过Hessian机制暴露远程访问服务，命名规则为xxBean -->
+    <bean id="userService" class="org.springframework.remoting.caucho.HessianProxyFactoryBean">
+        <!-- 注意，这个的顺序很重要，最好放在其他Property之前 -->
+        <property name="proxyFactory">
+            <bean class="edu.zhku.hessian.auth.MyHessianProxyFactory"/>
+        </property>
+        <property name="serviceUrl" value="http://localhost/userService"/>
+        <property name="serviceInterface" value="edu.zhku.hessian.service.UserService"/>
+        <property name="chunkedPost" value="false"/>
+        <!-- 是否支持重载方法 -->
+        <property name="overloadEnabled" value="true"/>
+
+    </bean>
+    <bean id="roleService" class="org.springframework.remoting.caucho.HessianProxyFactoryBean">
+        <property name="proxyFactory">
+            <bean class="edu.zhku.hessian.auth.MyHessianProxyFactory"/>
+        </property>
+        <property name="serviceUrl" value="http://localhost/roleService"/>
+        <property name="serviceInterface" value="edu.zhku.hessian.service.RoleService"/>
+        <property name="chunkedPost" value="false"/>
+        <property name="overloadEnabled" value="true"/>
+    </bean>
+</beans>
