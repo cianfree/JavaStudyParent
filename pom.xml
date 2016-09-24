@@ -29,6 +29,11 @@
         <module>study-springmvc-junit-test</module>
         <module>JavaSECore</module>
         <module>WebCommonProjects</module>
+        <module>RMIStudyParent</module>
+        <module>EhcacheStudy</module>
+        <module>EasyUIStudy</module>
+        <module>LuceneStudy</module>
+        <module>UtilsClass</module>
     </modules>
 
     <properties>
@@ -256,6 +261,11 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>fastjson</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
