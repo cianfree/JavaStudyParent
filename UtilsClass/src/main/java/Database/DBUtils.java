@@ -962,8 +962,26 @@ public class DBUtils {
      */
     private static void setFieldValue(Object obj, Field field, Object value) {
         field.setAccessible(true);
+        Object realValue = value;
         try {
-            field.set(obj, value);
+            if (value instanceof Number) {
+                Number number = (Number) value;
+                Class<?> fieldType = field.getType();
+                if (fieldType.equals(Integer.class) || fieldType.equals(int.class)) {
+                    realValue = number.intValue();
+                } else if (fieldType.equals(Long.class) || fieldType.equals(long.class)) {
+                    realValue = number.longValue();
+                } else if (fieldType.equals(Short.class) || fieldType.equals(short.class)) {
+                    realValue = number.shortValue();
+                } else if (fieldType.equals(Double.class) || fieldType.equals(double.class)) {
+                    realValue = number.doubleValue();
+                } else if (fieldType.equals(Float.class) || fieldType.equals(float.class)) {
+                    realValue = number.floatValue();
+                } else if (fieldType.equals(Byte.class) || fieldType.equals(byte.class)) {
+                    realValue = number.byteValue();
+                }
+            }
+            field.set(obj, realValue);
         } catch (IllegalAccessException ignored) {
         }
     }
