@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.Date;
 
+
 /**
  * <pre>
  * POM 依赖：
@@ -292,6 +293,55 @@ public class DBUtils {
             pstmt = conn.prepareStatement(sql);
             fixParams(pstmt, params);
             return pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt);
+        }
+        return 0;
+    }
+
+    /**
+     * 批量更新
+     *
+     * @param updateSql  sql语句
+     * @param paramsList 参数
+     * @param batchSize  每次批处理多少记录
+     */
+    public int executeBatchUpdate(String updateSql, List<Object[]> paramsList, int batchSize) {
+        showInfo(updateSql, Integer.class, underlineTable, underlineFiled);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = openConnection();
+            conn.setAutoCommit(true);
+
+            int totalSize = paramsList.size();
+            // 要执行多少次批处理
+            int batchPage = totalSize % batchSize == 0 ? totalSize / batchSize : totalSize / batchSize + 1;
+            int effectiveCount = 0;
+            for (int i = 0; i < batchPage; ++i) {
+                int begIndex = i * batchSize;
+                int endIndex = i + batchSize - 1;
+                endIndex = endIndex >= totalSize ? totalSize - 1 : endIndex;
+                try {
+                    if (null != pstmt) {
+                        pstmt.close();
+                    }
+                } catch(Exception ignored) {}
+
+                pstmt = conn.prepareStatement(updateSql);
+                for (int j = begIndex; j <= endIndex; ++j) {
+                    fixParams(pstmt, paramsList.get(j));
+                    pstmt.addBatch();
+                }
+                // 执行
+                int[] result = pstmt.executeBatch();
+                for (Integer k : result) {
+                    effectiveCount += k;
+                }
+            }
+            return effectiveCount;
         } catch (SQLException e) {
             e.printStackTrace();
         } finally {
