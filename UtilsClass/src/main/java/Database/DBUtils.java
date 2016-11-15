@@ -601,7 +601,24 @@ public class DBUtils {
             fixParams(pstmt, params);
             rs = pstmt.executeQuery();
             while (rs.next()) {
-                resultList.add(requiredType.cast(rs.getObject(1)));
+                Object value = rs.getObject(1);
+                if (value instanceof Number) {
+                    Number number = (Number) value;
+                    if (requiredType.equals(Integer.class) || requiredType.equals(int.class)) {
+                        value = number.intValue();
+                    } else if (requiredType.equals(Long.class) || requiredType.equals(long.class)) {
+                        value = number.longValue();
+                    } else if (requiredType.equals(Short.class) || requiredType.equals(short.class)) {
+                        value = number.shortValue();
+                    } else if (requiredType.equals(Double.class) || requiredType.equals(double.class)) {
+                        value = number.doubleValue();
+                    } else if (requiredType.equals(Float.class) || requiredType.equals(float.class)) {
+                        value = number.floatValue();
+                    } else if (requiredType.equals(Byte.class) || requiredType.equals(byte.class)) {
+                        value = number.byteValue();
+                    }
+                }
+                resultList.add(requiredType.cast(value));
             }
             return resultList;
         } catch (SQLException e) {
