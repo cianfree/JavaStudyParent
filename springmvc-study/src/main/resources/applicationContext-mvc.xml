@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:mvc="http://www.springframework.org/schema/mvc"
+       xsi:schemaLocation="
+	http://www.springframework.org/schema/beans
+	http://www.springframework.org/schema/beans/spring-beans-4.1.xsd
+	http://www.springframework.org/schema/context
+	http://www.springframework.org/schema/context/spring-context-4.1.xsd
+	http://www.springframework.org/schema/mvc
+	http://www.springframework.org/schema/mvc/spring-mvc-4.1.xsd">
+
+    <!-- 扫描控制器 mvc 层只扫描 controller注解的bean -->
+    <context:component-scan base-package="com.github.cianfree"/>
+
+    <!-- 对静态资源文件的访问 方案一 （二选一）匹配的URL被当做静态资源，由Spring读出到内存中再由ResourceHttpRequestHandle响应http。 -->
+    <!--<mvc:default-servlet-handler/>-->
+    <!--<mvc:resources mapping="/img/**" location="/img/" cache-period="31556926" />
+    <mvc:resources mapping="/css/**" location="/css/" cache-period="31556926" />
+    <mvc:resources mapping="/js/**" location="/js/" cache-period="31556926" />-->
+
+    <mvc:annotation-driven conversion-service="conversionService">
+        <!--<mvc:argument-resolvers>
+            <bean class="com.github.cianfree.autoinject.bytype.AutoInjectByTypeHandlerMethodArgumentResolver"/>
+            <bean class="com.github.cianfree.autoinject.bytype.ApplicationContextHandlerMethodArgumentResolver"/>
+        </mvc:argument-resolvers>-->
+    </mvc:annotation-driven>
+
+    <bean id="byteArrayHttpMessageConverter" class="org.springframework.http.converter.ByteArrayHttpMessageConverter"/>
+
+    <!-- BEGIN 配置Jackson，Spring与Jackson进行整合 -->
+    <bean id="jackson2HttpMessageConverter"
+          class="org.springframework.http.converter.json.MappingJackson2HttpMessageConverter">
+        <property name="supportedMediaTypes">
+            <list>
+                <value>*/*;charset=UTF-8</value>
+            </list>
+        </property>
+        <property name="objectMapper" ref="objectMapper"/>
+    </bean>
+
+    <bean name="objectMapper" class="com.fasterxml.jackson.databind.ObjectMapper">
+        <!-- 定义全局日期类型的格式化样式 -->
+        <property name="dateFormat" ref="defaultDateFormat"/>
+        <!-- 序列化时，include规则为：不包含为空字符串，空集合，空数组或null的属性 -->
+        <property name="serializationInclusion" value="NON_EMPTY"/>
+    </bean>
+
+    <!-- 指定objectMapper的configure方法，设置 -->
+    <bean class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject" ref="objectMapper"/>
+        <property name="targetMethod" value="configure"/>
+        <property name="arguments">
+            <list>
+                <value type="com.fasterxml.jackson.databind.MapperFeature">DEFAULT_VIEW_INCLUSION</value>
+                <value>false</value>
+            </list>
+        </property>
+    </bean>
+
+    <bean id="defaultDateFormat" class="java.text.SimpleDateFormat">
+        <constructor-arg type="java.lang.String" value="yyyy-MM-dd HH:mm:ss"/>
+    </bean>
+    <!-- END 配置Jackson，Spring与Jackson进行整合 -->
+    <bean id="conversionService" class="org.springframework.format.support.FormattingConversionServiceFactoryBean">
+        <property name="converters">
+            <set>
+                <bean class="com.github.cianfree.converter.ItemConverter"/>
+            </set>
+        </property>
+    </bean>
+
+    <bean id="webBindingInitializer" class="com.github.cianfree.webbinding.GlobalWebBinding">
+        <property name="conversionService" ref="conversionService"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+        <property name="webBindingInitializer" ref="webBindingInitializer"/>
+        <property name="messageConverters">
+            <list>
+                <ref bean="byteArrayHttpMessageConverter"/>
+                <ref bean="jackson2HttpMessageConverter"/>
+            </list>
+        </property>
+
+        <property name="customArgumentResolvers">
+            <list>
+                <bean class="com.github.cianfree.autoinject.bytype.AutoInjectByTypeHandlerMethodArgumentResolver"/>
+                <bean class="com.github.cianfree.autoinject.bytype.ApplicationContextHandlerMethodArgumentResolver"/>
+            </list>
+        </property>
+        <property name="order" value="1"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping"/>
+
+
+    <!-- web层相关的配置 -->
+    <!-- 配置JSP页面解析器，Spring其实可以支持多种显示，本例子使用jsp作为显示 -->
+    <bean name="jspViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        <property name="prefix" value="/WEB-INF/"/>
+        <property name="suffix" value=".jsp"/>
+        <property name="order" value="2"/>
+    </bean>
+
+    <bean class="org.springframework.web.servlet.view.BeanNameViewResolver">
+        <property name="order" value="2"/>
+    </bean>
+</beans>
