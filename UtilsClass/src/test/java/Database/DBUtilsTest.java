@@ -83,4 +83,13 @@ public class DBUtilsTest {
 
         System.out.println(poem.getMingcheng());
     }
+
+    /**
+     * 测试空的属性值处理
+     */
+    @Test
+    public void testNullFieldHandle() {
+        DBUtils dbUtils = DBUtils.mysqlBuilder("rise_db").build();
+        dbUtils.executeUpdate("insert into test_table(account, create_time) values(?,?)", null, null);
+    }
 }

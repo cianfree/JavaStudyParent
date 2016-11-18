@@ -50,7 +50,7 @@
         <snapshotRepository>
             <id>bxtpw-snapshots</id>
             <name>Common Nexus Snapshot Repository</name>
-            <url>${repo.snapshots.url}</url>
+            <url>${repo.snapshots.url}</url>DbUti
         </snapshotRepository>
     </distributionManagement>
 

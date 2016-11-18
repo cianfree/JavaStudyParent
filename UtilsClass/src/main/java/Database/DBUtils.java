@@ -328,7 +328,8 @@ public class DBUtils {
                     if (null != pstmt) {
                         pstmt.close();
                     }
-                } catch(Exception ignored) {}
+                } catch (Exception ignored) {
+                }
 
                 pstmt = conn.prepareStatement(updateSql);
                 for (int j = begIndex; j <= endIndex; ++j) {
@@ -365,10 +366,6 @@ public class DBUtils {
             return 0;
         }
         return insert(getDBTableName(model.getClass(), underlineTable), model, underlineFiled, ignoredFields);
-    }
-
-    public int insert(String table, Object model) {
-        return insert(table, model, this.underlineFiled);
     }
 
     public int insert(String table, Object model, String... ignoredFields) {
