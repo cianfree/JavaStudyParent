@@ -685,7 +685,7 @@ public class DBUtils {
     }
 
     public <T> List<T> getModelList(String sql, Class<T> requiredType, Object... params) {
-        return getModelList(sql, requiredType, underlineFiled, params);
+        return getModelList(sql, requiredType, underlineFiled, null, params);
     }
 
 

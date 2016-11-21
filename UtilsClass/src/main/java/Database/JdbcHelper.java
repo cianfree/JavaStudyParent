@@ -7,8 +7,14 @@ import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.Date;
 import java.util.concurrent.ConcurrentHashMap;
+
+import static Database.JdbcHelper.UnderlineAndHumpNameConverter.unwrapperDBAttr;
+import static Database.JdbcHelper.UnderlineAndHumpNameConverter.wrapperDBAttr;
 
 /**
  * 接口定义
@@ -100,6 +106,16 @@ public class JdbcHelper {
         public static String wrapperDBAttr(String dbAttr) {
             String result = dbAttr.matches("^ *`.*` *$") ? dbAttr.trim() : ("`" + dbAttr.trim().replaceFirst("^ *`", "").replaceFirst("` *$", "") + "`").replaceAll("\\.", "`.`");
             return result.replaceAll("(^ *`) *(.*) *(` *$)", "$1$2$3");
+        }
+
+        /**
+         * 取消包装
+         *
+         * @param dbAttr
+         * @return
+         */
+        public static String unwrapperDBAttr(String dbAttr) {
+            return dbAttr.replaceFirst(" *^`", "").replaceFirst(" *` *$", "");
         }
 
         /**
@@ -449,6 +465,9 @@ public class JdbcHelper {
         /** 是否需要覆盖性插入，默认是 否 */
         private static ThreadLocal<Boolean> replaceInsert = new ThreadLocal<>();
 
+        /** 是否需要忽略未知属性，默认是 是 */
+        private static ThreadLocal<Boolean> ignoredUnknownField = new ThreadLocal<>();
+
         /** 是否自动转换 null 的属性 */
         private static ThreadLocal<Boolean> autoConvertNullField = new ThreadLocal<>();
 
@@ -473,11 +492,17 @@ public class JdbcHelper {
         /** 是否启用全局模型类型对应的主键属性列表， 默认是 启用 */
         private static ThreadLocal<Boolean> enabledGlobalTypePrimaryKeysMap = new ThreadLocal<>();
 
+        /** 启用Log */
+        private static ThreadLocal<Boolean> enabledLog = new ThreadLocal<>();
+
         /** 当前页面 */
         private static ThreadLocal<Integer> currentPage = new ThreadLocal<>();
 
         /** 要查询多少数据 */
         private static ThreadLocal<Integer> pageSize = new ThreadLocal<>();
+
+        /** 当前线程数据库链接 */
+        private static ThreadLocal<Connection> connection = new ThreadLocal<>();
 
         public static NameConverter getTableNameConverter() {
             return null == tableNameConverter.get() ? GlobalConfig.getDefaultTableNameConverter() : tableNameConverter.get();
@@ -537,6 +562,14 @@ public class JdbcHelper {
 
         public static void replaceInsert(boolean replaceInsert) {
             ThreadConfig.replaceInsert.set(replaceInsert);
+        }
+
+        public static boolean isIgnoredUnknownField() {
+            return null == ignoredUnknownField.get() ? true : ignoredUnknownField.get();
+        }
+
+        public static void ignoredUnknownField(boolean ignoredUnknownField) {
+            ThreadConfig.ignoredUnknownField.set(ignoredUnknownField);
         }
 
         public static boolean isAutoConvertNullField() {
@@ -681,6 +714,14 @@ public class JdbcHelper {
             ThreadConfig.enabledGlobalTypePrimaryKeysMap.set(enabled);
         }
 
+        public static void enabledLog(boolean enabled) {
+            ThreadConfig.enabledLog.set(enabled);
+        }
+
+        public static boolean enabledLog() {
+            return ThreadConfig.enabledLog.get() == null ? true : ThreadConfig.enabledLog.get();
+        }
+
         public static Integer getCurrentPage() {
             return currentPage.get();
         }
@@ -710,6 +751,14 @@ public class JdbcHelper {
                 return false;
             }
             return true;
+        }
+
+        public static void setConnection(Connection currentConnection) {
+            ThreadConfig.connection.set(currentConnection);
+        }
+
+        public static Connection getConnection() {
+            return ThreadConfig.connection.get();
         }
     }
 
@@ -811,23 +860,6 @@ public class JdbcHelper {
     private final String jdbcUrl;
     private final String username;
     private final String password;
-    /**
-     * 数据库字段是否使用下划线分割
-     */
-    private final boolean underlineFiled;
-    /**
-     * 数据库表是否使用下划线分割
-     */
-    private final boolean underlineTable;
-    /**
-     * 标准输出日志
-     */
-    private boolean stdlog = true;
-    /**
-     * 忽略未知属性
-     */
-    private boolean ignoredUnknownField = true;
-
 
     public static class Builder {
         private String driver = DRIVER_MYSQL;
@@ -837,10 +869,6 @@ public class JdbcHelper {
         private String jdbcUrl = JDBC_URL_MYSQL;
         private int port = 3306;
         private String host = "localhost";
-        private boolean underlineFiled = true;
-        private boolean underlineTable = true;
-        private boolean stdlog = true;
-        private boolean ignoredUnknownField = true;
 
         public Builder(String schema) {
             this.schema = schema;
@@ -871,34 +899,14 @@ public class JdbcHelper {
             return this;
         }
 
-        public Builder underlineField(boolean underlineFiled) {
-            this.underlineFiled = underlineFiled;
-            return this;
-        }
-
-        public Builder underlineTable(boolean underlineTable) {
-            this.underlineTable = underlineTable;
-            return this;
-        }
-
         private Builder jdbcUrl(String jdbcUrl) {
             this.jdbcUrl = jdbcUrl;
             return this;
         }
 
-        private Builder stdlog(boolean stdlog) {
-            this.stdlog = stdlog;
-            return this;
-        }
-
-        private Builder ignoreUnknownField(boolean ignoredUnknownField) {
-            this.ignoredUnknownField = ignoredUnknownField;
-            return this;
-        }
-
         public JdbcHelper build() {
             String url = jdbcUrl.replace("{host}", host).replace("{port}", "" + port).replace("{schema}", schema);
-            return new JdbcHelper(driver, url, username, password, underlineFiled, underlineTable, stdlog, ignoredUnknownField);
+            return new JdbcHelper(driver, url, username, password);
         }
     }
 
@@ -1087,15 +1095,55 @@ public class JdbcHelper {
         }
     }
 
-    private JdbcHelper(String driver, String jdbcUrl, String username, String password, boolean underlineFiled, boolean underlineTable, boolean stdlog, boolean ignoredUnknownField) {
+    public static class MapInsertBuilder extends AbstractSqlBuilder<MapInsertBuilder> {
+
+        private Map<String, Object> dataMap;
+
+        /** 要操作的数据库表 */
+        private String table;
+
+        public MapInsertBuilder(String table, Map<String, Object> dataMap) {
+            this.dataMap = dataMap;
+            this.table = table;
+        }
+
+        @Override
+        protected MapInsertBuilder getSelf() {
+            return this;
+        }
+
+        @Override
+        protected String buildSql() {
+            boolean replaceInto = isReplaceInto();
+            StringBuilder builder;
+            if (replaceInto) {
+                builder = new StringBuilder("REPLACE INTO ");
+            } else {
+                builder = new StringBuilder("INSERT INTO ");
+            }
+            builder.append(table);
+            StringBuilder fieldsBuilder = new StringBuilder("(");
+            StringBuilder valuesBuilder = new StringBuilder("VALUES(");
+
+            for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
+                String dbFieldName = getDBFieldName(null, this.table, entry.getKey());
+                Object value = entry.getValue();
+                if (null == value) {
+                    value = getJavaFieldDefaultValue(null, entry.getKey(), null);
+                }
+                fieldsBuilder.append(dbFieldName).append(",");
+                valuesBuilder.append("?,");
+                addParams(value);
+            }
+            return builder.append(fieldsBuilder.toString().replaceFirst(",$", ")")).append(" ").append(valuesBuilder.toString().replaceFirst(",$", ")")).toString();
+        }
+    }
+
+    private JdbcHelper(String driver, String jdbcUrl, String username, String password) {
         this.driver = driver;
         this.jdbcUrl = jdbcUrl;
         this.username = username;
         this.password = password;
-        this.underlineFiled = underlineFiled;
-        this.underlineTable = underlineTable;
-        this.stdlog = stdlog;
-        this.ignoredUnknownField = ignoredUnknownField;
 
         initContext();
     }
@@ -1116,7 +1164,13 @@ public class JdbcHelper {
 
     private Connection openConnection() {
         try {
-            return DriverManager.getConnection(jdbcUrl, username, password);
+            Connection connection = ThreadConfig.getConnection();
+            if (null == connection) {
+                connection = DriverManager.getConnection(jdbcUrl, username, password);
+                connection.setAutoCommit(true);
+                ThreadConfig.setConnection(connection);
+            }
+            return connection;
         } catch (SQLException e) {
             throw new RuntimeException("不能获取数据库链接");
         }
@@ -1191,15 +1245,15 @@ public class JdbcHelper {
      * @param modelType 数据库表名称
      */
     private static String getTablename(Class<?> modelType) {
+        // 先从当前线程中获取，如果当前线程中设置了表名称，就使用当前线程的
+        String table = ThreadConfig.getOperateTable();
+        if (isNotBlank(table)) {
+            return wrapperDBAttr(table);
+        }
         if (modelType == null) {
-            // 从当前线程中获取
-            String table = ThreadConfig.getOperateTable();
-            if (isNotBlank(table)) {
-                return table;
-            }
             throw new RuntimeException("Can not parse table name!");
         }
-        String table = GlobalConfig.getTable(modelType);
+        table = GlobalConfig.getTable(modelType);
         if (isNotBlank(table)) {
             return table;
         }
@@ -1265,6 +1319,31 @@ public class JdbcHelper {
     }
 
     /**
+     * 将数据库字段转成Java模型字段
+     */
+    private static String getModelFieldName(String table, String dbColumnName) {
+        if (null == dbColumnName || dbColumnName.trim().equals("")) {
+            throw new RuntimeException("DB field name should not be null!");
+        }
+        // 先从当前线程配置中查询
+        String javaFieldName = ThreadConfig.getJavaField(dbColumnName);
+        if (isNotBlank(javaFieldName)) {
+            return javaFieldName;
+        }
+        // 从全局配置中获取
+        if (isNotBlank(table)) {
+            javaFieldName = GlobalConfig.getJavaField(table, javaFieldName);
+            if (isNotBlank(javaFieldName)) {
+                return javaFieldName;
+            }
+        }
+        // 还是找不到，通过计算
+        NameConverter fieldNameConverter = ThreadConfig.getFieldNameConverter();
+        fieldNameConverter = null == fieldNameConverter ? UnderlineAndHumpNameConverter.getInstance() : fieldNameConverter;
+        return fieldNameConverter.convertToJavaName(dbColumnName);
+    }
+
+    /**
      * 配置当前线程需要忽略的java字段名称
      *
      * @param ignoredFields 要忽略的java字段属性名称
@@ -1302,7 +1381,7 @@ public class JdbcHelper {
             }
         }
         if (field != null) {
-            if (null != field.getAnnotation(InsertIgnoredField.class)) {
+            if (null != field.getAnnotation(IgnoredField.class) || null != field.getAnnotation(InsertIgnoredField.class)) {
                 return true;
             }
         }
@@ -1430,13 +1509,53 @@ public class JdbcHelper {
         return this;
     }
 
+    public JdbcHelper enabledLog(boolean enabledLog) {
+        ThreadConfig.enabledLog(enabledLog);
+        return this;
+    }
+
+    public boolean enabledLog() {
+        return ThreadConfig.enabledLog();
+    }
+
+    private void showLog(String sql, Class<?> resultType, Object... params) {
+        showLog(sql, null == resultType ? "" : resultType.getName(), params);
+    }
+
+    private void showLog(String sql, String resultType, Object... params) {
+        if (!enabledLog()) {
+            return;
+        }
+        int index = sql.indexOf(" ");
+        String sqlType = sql.substring(0, index).toUpperCase();
+        System.out.println(">>> -------------------------------------------------------------------------------------------------");
+        System.out.println(">>> Execute Info:\t" + sqlType);
+        System.out.println(">>> ResultType: \t" + (null == resultType || "".equals(resultType) ? "Not Required!" : resultType));
+        System.out.println(">>> TableNameConverter: " + ThreadConfig.getTableNameConverter().getClass());
+        System.out.println(">>> FieldNameConverter: " + ThreadConfig.getFieldNameConverter().getClass());
+        System.out.println(">>> Paging: " + ThreadConfig.isPaging());
+        System.out.println(">>> AutoConvertNullField: " + ThreadConfig.isAutoConvertNullField());
+        System.out.println(">>> SQL:\t\t\t" + sql);
+        if (null != params && params.length > 0) {
+            System.out.print(">>> Parameters: \t");
+            StringBuilder builder = new StringBuilder();
+            for (Object obj : params) {
+                builder.append(null != obj ? obj.toString() + "" : "'null'").append(", ");
+            }
+            System.out.println(builder.toString().replaceFirst(", $", ""));
+        } else {
+            System.out.println(">>> Not Parameters!");
+        }
+        System.out.println(">>> -------------------------------------------------------------------------------------------------");
+    }
+
     /**
      * 设置当前线程，进行分页
      *
      * @param currentPage 查询的当前页
      * @param pageSize    查询数量
      */
-    public JdbcHelper pageResult(int currentPage, int pageSize) {
+    public JdbcHelper paging(int currentPage, int pageSize) {
         ThreadConfig.setCurrentPage(currentPage);
         ThreadConfig.setPageSize(pageSize);
         return this;
@@ -1450,8 +1569,7 @@ public class JdbcHelper {
      */
     <T> int insertModel(T model) {
         InsertBuilder builder = new InsertBuilder(model);
-        System.out.println(builder.getSql());
-        return 0;
+        return executeUpdate(builder.getSql(), builder.getParams());
     }
 
     /**
@@ -1461,8 +1579,49 @@ public class JdbcHelper {
      * @param dataMap 数据Map
      */
     int insertMap(String table, Map<String, Object> dataMap) {
-        // TODO
-        return 0;
+        MapInsertBuilder builder = new MapInsertBuilder(table, dataMap);
+        return executeUpdate(builder.getSql(), builder.getParams());
+    }
+
+    /**
+     * @author Arvin
+     * @time 2016/11/15 14:20
+     */
+    public class MapBatchInsertBuilder {
+
+        private List<Map<String, Object>> dataListMap;
+
+        private String insertSql;
+
+        private String table;
+
+        private List<Object[]> paramsList = new ArrayList<>();
+
+        public MapBatchInsertBuilder(String table, List<Map<String, Object>> dataListMap) {
+            this.dataListMap = dataListMap;
+            this.table = table;
+            buildInsertSql();
+        }
+
+        private void buildInsertSql() {
+            for (Map<String, Object> dataMap : dataListMap) {
+                MapInsertBuilder builder = new MapInsertBuilder(table, dataMap);
+                if (null == insertSql) {
+                    this.insertSql = builder.getSql();
+                } else {
+                    builder.getSql();
+                }
+                paramsList.add(builder.getParams());
+            }
+        }
+
+        public String getInsertSql() {
+            return insertSql;
+        }
+
+        public List<Object[]> getParamsList() {
+            return paramsList;
+        }
     }
 
     /**
@@ -1474,8 +1633,45 @@ public class JdbcHelper {
      * @return 返回数据库影响行数
      */
     int insertMapsByBatch(int batchSize, String table, List<Map<String, Object>> dataMapList) {
-        // TODO
-        return 0;
+        MapBatchInsertBuilder builder = new MapBatchInsertBuilder(table, dataMapList);
+        return executeBatchUpdate(batchSize, builder.getInsertSql(), builder.getParamsList());
+    }
+
+    /**
+     * 批量Insert
+     *
+     * @author Arvin
+     * @time 2016/11/15 14:20
+     */
+    public class BatchInsertBuilder<T> {
+
+        private String insertSql;
+
+        private List<Object[]> paramsList = new ArrayList<>();
+
+        public BatchInsertBuilder(List<T> dataList) {
+            buildInsertSql(dataList);
+        }
+
+        private void buildInsertSql(List<T> dataList) {
+            for (T data : dataList) {
+                InsertBuilder builder = new InsertBuilder(data);
+                if (null == insertSql) {
+                    this.insertSql = builder.getSql();
+                } else {
+                    builder.getSql();
+                }
+                paramsList.add(builder.getParams());
+            }
+        }
+
+        public String getInsertSql() {
+            return insertSql;
+        }
+
+        public List<Object[]> getParamsList() {
+            return paramsList;
+        }
     }
 
     /**
@@ -1487,8 +1683,8 @@ public class JdbcHelper {
      * @return 返回数据库影响行数
      */
     <T> int insertModelsByBatch(int batchSize, String table, List<T> modelList) {
-        // TODO
-        return 0;
+        BatchInsertBuilder<T> builder = new BatchInsertBuilder<>(modelList);
+        return executeBatchUpdate(batchSize, builder.getInsertSql(), builder.getParamsList());
     }
 
     /**
@@ -1498,8 +1694,7 @@ public class JdbcHelper {
      * @param params           参数
      */
     int insertBySql(String prepareInsertSql, Object... params) {
-        // TODO
-        return 0;
+        return executeUpdate(prepareInsertSql, params);
     }
 
     /**
@@ -1510,8 +1705,7 @@ public class JdbcHelper {
      * @param paramsList       参数列表
      */
     int insertByBatchForSql(int batchSize, String prepareInsertSql, List<Object[]> paramsList) {
-        // TODO
-        return 0;
+        return executeBatchUpdate(batchSize, prepareInsertSql, paramsList);
     }
 
     /**
@@ -1527,8 +1721,65 @@ public class JdbcHelper {
      * @throws PrimaryNotFoundException 主键找不到异常
      */
     <T> int deleteByPrimaryKey(T model, String... primaryKeys) throws PrimaryNotFoundException {
-        // TODO
-        return 0;
+        List<String> primaryKeyList = getPrimaryKeyList(model.getClass(), primaryKeys);
+        String[] pkArray = new String[primaryKeyList.size()];
+        pkArray = primaryKeyList.toArray(pkArray);
+        Object[] pkValues = getFieldValues(model, pkArray);
+        String table = getTablename(model.getClass());
+        StringBuilder builder = new StringBuilder("DELETE FROM ").append(table).append(" WHERE");
+        for (String pkName : pkArray) {
+            builder.append(" ").append(getDBFieldName(null, table, pkName)).append("=? AND");
+        }
+        String deleteSql = builder.toString().replaceAll("AND *$", "");
+        return executeUpdate(deleteSql, pkValues);
+    }
+
+    private Object[] getFieldValues(Object obj, String[] fieldsName) {
+        if (null == fieldsName || fieldsName.length < 1) {
+            throw new RuntimeException("Invalid Field name!");
+        }
+        Object[] values = new Object[fieldsName.length];
+        int i = 0;
+        for (String fieldName : fieldsName) {
+            values[i] = ReflectUtils.getFieldValue(obj, ReflectUtils.findDeclaredField(obj.getClass(), fieldName));
+        }
+        return values;
+    }
+
+    /**
+     * 删除一个模型, 会根据主键来删除，主键的查找规则为：
+     * 1. 检查是否传了 primaryKeys 参数，如果传了就直接使用，并验证是否存在
+     * 2. 如果没有传，检测是否存在全局的类型-主键属性列表配置，如果有就直接用，没有就继续第三步
+     * 3. 如果第 2 步骤没有找到，直接从类中检测 PrimaryKey 标签，把有 PrimaryKey 标签的作为主键并添加到全局的配置中
+     * 4. 如果第 3 步骤还是没有，直接抛出 PrimaryKeyNotFoundException
+     *
+     * @param modelType
+     * @param customPrimaryKeys
+     * @return
+     */
+    private List<String> getPrimaryKeyList(Class<?> modelType, String[] customPrimaryKeys) {
+        if (customPrimaryKeys != null && customPrimaryKeys.length < 1) {
+            return Arrays.asList(customPrimaryKeys);
+        }
+        String table = getTablename(modelType);
+        Set<String> primaryKeySet = GlobalConfig.getTablePrimaryKeys(table);
+        if (primaryKeySet != null && !primaryKeySet.isEmpty()) {
+            return new ArrayList<>(primaryKeySet);
+        }
+        List<Field> fields = ReflectUtils.getNoneStaticDeclaredFields(modelType, null);
+        if (fields == null || fields.isEmpty()) {
+            throw new PrimaryNotFoundException();
+        }
+        List<String> resultList = new ArrayList<>();
+        for (Field field : fields) {
+            if (field.getAnnotation(PrimaryKey.class) != null) {
+                resultList.add(field.getName());
+            }
+        }
+        if (resultList.isEmpty()) {
+            throw new PrimaryNotFoundException();
+        }
+        return resultList;
     }
 
     /**
@@ -1538,8 +1789,7 @@ public class JdbcHelper {
      * @param params     参数列表
      */
     int delete(String prepareSql, Object... params) {
-        // TODO
-        return 0;
+        return executeUpdate(prepareSql, params);
     }
 
     /**
@@ -1578,21 +1828,20 @@ public class JdbcHelper {
      * @param params     参数列表
      */
     int update(String prepareSql, Object... params) {
-        // TODO
-        return 0;
+        return executeUpdate(prepareSql, params);
     }
 
     /**
      * 根据ID获取指定的模型对象
      *
-     * @param modelType 模型类型
-     * @param idValue   ID值
-     * @param <T>       模型类型
-     * @param <K>       模型的主键类型
+     * @param modelType    模型类型
+     * @param idValue      ID值
+     * @param modelBuilder 模型构造器
+     * @param <T>          模型类型
+     * @param <K>          模型的主键类型
      */
-    <T, K> T getById(Class<T> modelType, K idValue) {
-        // TODO
-        return null;
+    <T, K> T getById(Class<T> modelType, K idValue, ModelBuilder<T> modelBuilder) {
+        return getByPrimaryKey(modelType, "id", idValue, modelBuilder);
     }
 
     /**
@@ -1601,13 +1850,13 @@ public class JdbcHelper {
      * @param modelType       模型类型
      * @param primaryKey      主键java属性
      * @param primaryKeyValue 主键值
+     * @param modelBuilder    模型构造器
      * @param <T>             模型类型
      * @param <K>             主键类型
      * @throws PrimaryNotFoundException 主键找不到异常
      */
-    <T, K> T getByPrimaryKey(Class<T> modelType, String primaryKey, K primaryKeyValue) throws PrimaryNotFoundException {
-        // TODO
-        return null;
+    <T, K> T getByPrimaryKey(Class<T> modelType, String primaryKey, K primaryKeyValue, ModelBuilder<T> modelBuilder) throws PrimaryNotFoundException {
+        return getByPrimaryKeys(modelType, new String[]{primaryKey}, new Object[]{primaryKeyValue}, modelBuilder);
     }
 
     /**
@@ -1619,9 +1868,17 @@ public class JdbcHelper {
      * @param <T>              主键类型
      * @throws PrimaryNotFoundException 主键找不到异常
      */
-    <T> T getByPrimaryKeys(Class<T> modelType, String[] primaryKeys, Object[] primaryKeyValues) throws PrimaryNotFoundException {
-        // TODO
-        return null;
+    <T> T getByPrimaryKeys(Class<T> modelType, String[] primaryKeys, Object[] primaryKeyValues, ModelBuilder<T> modelBuilder) throws PrimaryNotFoundException {
+        if (modelType == null || primaryKeys == null || primaryKeys.length < 1 || primaryKeyValues == null || primaryKeyValues.length < 1) {
+            throw new RuntimeException("Invalid params!");
+        }
+        String table = getTablename(modelType);
+        StringBuilder sqlBuilder = new StringBuilder("SELECT * FROM " + table + " WHERE ");
+        for (String pk : primaryKeys) {
+            sqlBuilder.append(wrapperDBAttr(pk)).append("=? AND ");
+        }
+        String prepareSql = sqlBuilder.toString().replaceFirst("AND *$", "LIMIT 1");
+        return getModel(prepareSql, modelType, modelBuilder, primaryKeyValues);
     }
 
     /**
@@ -1631,8 +1888,7 @@ public class JdbcHelper {
      * @param params     参数
      */
     int getCount(String prepareSql, Object... params) {
-        // TODO
-        return 0;
+        return getPrimitive(prepareSql, Integer.class, params);
     }
 
     /**
@@ -1642,20 +1898,75 @@ public class JdbcHelper {
      * @param params     参数
      */
     Map<String, Object> getMap(String prepareSql, Object... params) {
-        // TODO
+        showLog(prepareSql, "java.util.Map<String, Object>", params);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String table = ThreadConfig.getOperateTable();
+        try {
+            conn = openConnection();
+            pstmt = conn.prepareStatement(prepareSql);
+            fixParams(pstmt, params);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return toMap(table, rs);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt).close(rs);
+        }
         return null;
+    }
+
+    private Map<String, Object> toMap(String table, ResultSet rs) {
+        Map<String, Object> resultMap = new HashMap<>();
+        try {
+            ResultSetMetaData metaData = rs.getMetaData();
+            int count = metaData.getColumnCount();
+            for (int i = 1; i <= count; ++i) {
+                String columnName = getModelFieldName(table, metaData.getColumnName(i));
+                Object columnValue = rs.getObject(i);
+                resultMap.put(columnName, columnValue);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return resultMap;
     }
 
 
     /**
-     * 查询符合条件Map列表，如果要进行分页查询，请先调用 pageResult 方法
+     * 查询符合条件Map列表，如果要进行分页查询，请先调用 paging 方法
      *
      * @param prepareSql 查询sql
      * @param params     参数列表
      */
     List<Map<String, Object>> listMap(String prepareSql, Object... params) {
-        // TODO
-        return null;
+        if (ThreadConfig.isPaging()) {
+            prepareSql = prepareSql + " LIMIT " + (ThreadConfig.getCurrentPage() - 1) * ThreadConfig.getPageSize() + "," + ThreadConfig.getPageSize();
+        }
+        showLog(prepareSql, "List<Map<String, Object>>", params);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String table = ThreadConfig.getOperateTable();
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        try {
+            conn = openConnection();
+            pstmt = conn.prepareStatement(prepareSql);
+            fixParams(pstmt, params);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                resultList.add(toMap(table, rs));
+            }
+            return resultList;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt).close(rs);
+        }
+        return resultList;
     }
 
     /**
@@ -1663,56 +1974,145 @@ public class JdbcHelper {
      *
      * @param prepareSql   查询sql
      * @param requiredType 要求的模型类型
+     * @param modelBuilder 模型Builder
      * @param params       参数
      * @param <T>          类型
      */
-    <T> T getModel(String prepareSql, Class<T> requiredType, Object... params) {
-        // TODO
+    <T> T getModel(String prepareSql, Class<T> requiredType, ModelBuilder<T> modelBuilder, Object... params) {
+        showLog(prepareSql, requiredType, params);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = openConnection();
+            pstmt = conn.prepareStatement(prepareSql);
+            fixParams(pstmt, params);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                if (null == modelBuilder) {
+                    return toObject(requiredType, rs);
+                } else {
+                    return modelBuilder.build(rs);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt).close(rs);
+        }
+        return null;
+    }
+
+    private <T> T toObject(Class<T> requiredType, ResultSet rs) {
+        try {
+            String table = rs.getMetaData().getTableName(1);
+            List<Field> fields = ReflectUtils.getNoneStaticDeclaredFields(requiredType, null);
+            if (null != fields && !fields.isEmpty()) {
+                T result = requiredType.newInstance();
+                for (Field field : fields) {
+                    String dbFieldName = unwrapperDBAttr(getDBFieldName(field, table, field.getName()));
+                    try {
+                        setFieldValue(result, field, rs.getObject(dbFieldName));
+                    } catch (SQLException e) {
+                        if (ThreadConfig.isIgnoredUnknownField()) {
+                            if (ThreadConfig.enabledLog()) {
+                                System.out.println("Ignored Field: " + field.getName());
+                            }
+                        } else {
+                            throw new RuntimeException("没有对应 [" + field.getName() + "] 的属性！");
+                        }
+                    }
+                }
+                return result;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
     /**
-     * 查询模型
-     *
-     * @param prepareSql   查询sql
-     * @param modelBuilder 模型Builder
-     * @param params       参数
-     * @param <T>          模型类型
+     * 设置属性的值
      */
-    <T> T getModel(String prepareSql, ModelBuilder<T> modelBuilder, Object... params) {
-        // TODO
-        return null;
+    private static void setFieldValue(Object obj, Field field, Object value) {
+        field.setAccessible(true);
+        Object realValue = value;
+        try {
+            if (value instanceof Number) {
+                realValue = getNumberValue(value, field.getType());
+            }
+            field.set(obj, realValue);
+        } catch (IllegalAccessException ignored) {
+        }
+    }
+
+    private static <T> Object getNumberValue(Object value, Class<T> targetType) {
+        if (null == value) {
+            try {
+                return targetType.newInstance();
+            } catch (Exception e) {
+            }
+        }
+        if (value instanceof Number) {
+            Number number = (Number) value;
+            if (targetType.equals(Integer.class) || targetType.equals(int.class)) {
+                return number.intValue();
+            } else if (targetType.equals(Long.class) || targetType.equals(long.class)) {
+                return number.longValue();
+            } else if (targetType.equals(Short.class) || targetType.equals(short.class)) {
+                return number.shortValue();
+            } else if (targetType.equals(Double.class) || targetType.equals(double.class)) {
+                return number.doubleValue();
+            } else if (targetType.equals(Float.class) || targetType.equals(float.class)) {
+                return number.floatValue();
+            } else if (targetType.equals(Byte.class) || targetType.equals(byte.class)) {
+                return number.byteValue();
+            }
+        }
+        return value;
     }
 
     /**
-     * 查询模型列表，如果要进行分页查询，请先调用 pageResult 方法
+     * 查询模型列表，如果要进行分页查询，请先调用 paging 方法
      *
      * @param prepareSql   查询sql
      * @param requiredType 要求的模型类型
      * @param params       参数
      * @param <T>          类型
      */
-    <T> List<T> listModel(String prepareSql, Class<T> requiredType, Object... params) {
-        // TODO
-        return null;
-    }
-
-    /**
-     * 查询模型列表，如果要进行分页查询，请先调用 pageResult 方法
-     *
-     * @param prepareSql   查询sql
-     * @param modelBuilder 模型Builder
-     * @param params       参数
-     * @param <T>          模型类型
-     */
-    <T> List<T> listModel(String prepareSql, ModelBuilder<T> modelBuilder, Object... params) {
-        // TODO
-        return null;
+    <T> List<T> listModel(String prepareSql, Class<T> requiredType, ModelBuilder<T> modelBuilder, Object... params) {
+        if (ThreadConfig.isPaging()) {
+            prepareSql = prepareSql + " LIMIT " + (ThreadConfig.getCurrentPage() - 1) * ThreadConfig.getPageSize() + "," + ThreadConfig.getPageSize();
+        }
+        showLog(prepareSql, requiredType, params);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<T> resultList = new ArrayList<>();
+        try {
+            conn = openConnection();
+            pstmt = conn.prepareStatement(prepareSql);
+            fixParams(pstmt, params);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                if (null == modelBuilder) {
+                    resultList.add(toObject(requiredType, rs));
+                } else {
+                    resultList.add(modelBuilder.build(rs));
+                }
+            }
+            return resultList;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt).close(rs);
+        }
+        return resultList;
     }
 
     /**
      * 查询内置类型，包含：
-     * <p/>
+     * <p>
      * Integer，int，Long，long，Double，double，Short，short，Date，String
      *
      * @param prepareSql   sql
@@ -1722,15 +2122,36 @@ public class JdbcHelper {
      * @throws InvalidPrimitiveTypeException 不合法的内置类型
      */
     <T> T getPrimitive(String prepareSql, Class<T> requiredType, Object... params) throws InvalidPrimitiveTypeException {
-        // TODO
+        showLog(prepareSql, requiredType, params);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = openConnection();
+            pstmt = conn.prepareStatement(prepareSql);
+            fixParams(pstmt, params);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                Object obj = rs.getObject(1);
+                if (null != obj) {
+                    return requiredType.cast(obj instanceof Number ? getNumberValue(obj, requiredType) : obj);
+                } else {
+                    return null;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt).close(rs);
+        }
         return null;
     }
 
     /**
-     * 如果要进行分页查询，请先调用 pageResult 方法
-     * <p/>
+     * 如果要进行分页查询，请先调用 paging 方法
+     * <p>
      * 查询内置列表，包含：
-     * <p/>
+     * <p>
      * Integer，int，Long，long，Double，double，Short，short，Date，String
      *
      * @param prepareSql   sql
@@ -1740,8 +2161,30 @@ public class JdbcHelper {
      * @throws InvalidPrimitiveTypeException 不合法的内置类型
      */
     <T> List<T> listPrimitive(String prepareSql, Class<T> requiredType, Object... params) throws InvalidPrimitiveTypeException {
-        // TODO
-        return null;
+        showLog(prepareSql, requiredType, params);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        List<T> resultList = new ArrayList<>();
+        try {
+            conn = openConnection();
+            pstmt = conn.prepareStatement(prepareSql);
+            fixParams(pstmt, params);
+            rs = pstmt.executeQuery();
+            while (rs.next()) {
+                Object obj = rs.getObject(1);
+                if (null != obj) {
+                    resultList.add(requiredType.cast(obj instanceof Number ? getNumberValue(obj, requiredType) : obj));
+                } else {
+                    resultList.add(null);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt).close(rs);
+        }
+        return resultList;
     }
 
     /**
@@ -1751,8 +2194,43 @@ public class JdbcHelper {
      * @param params     参数列表
      */
     int executeUpdate(String prepareSql, Object... params) {
-        // TODO
+        showLog(prepareSql, Integer.class, params);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = openConnection();
+            pstmt = conn.prepareStatement(prepareSql);
+            fixParams(pstmt, params);
+            return pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt);
+        }
         return 0;
+    }
+
+    // TODO 可放到线程变量中
+    private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+    private void fixParams(PreparedStatement pstmt, Object[] params) throws SQLException {
+        if (null != params && params.length > 0) {
+            if (params.length == 1 && params[0] instanceof List) {
+                params = ((List) params[0]).toArray();
+            }
+            for (int i = 0; i < params.length; ++i) {
+                Object param = params[i];
+                if (param instanceof Date) {
+                    pstmt.setString(i + 1, dateFormat.format((Date) param));
+                } else {
+                    try {
+                        pstmt.setObject(i + 1, params[i]);
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -1763,7 +2241,43 @@ public class JdbcHelper {
      * @param paramsList 参数
      */
     int executeBatchUpdate(int batchSize, String prepareSql, List<Object[]> paramsList) {
-        // TODO
+        showLog(prepareSql, Integer.class);
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        try {
+            conn = openConnection();
+            int totalSize = paramsList.size();
+            // 要执行多少次批处理
+            int batchPage = totalSize % batchSize == 0 ? totalSize / batchSize : totalSize / batchSize + 1;
+            int effectiveCount = 0;
+            for (int i = 0; i < batchPage; ++i) {
+                int begIndex = i * batchSize;
+                int endIndex = i + batchSize - 1;
+                endIndex = endIndex >= totalSize ? totalSize - 1 : endIndex;
+                try {
+                    if (null != pstmt) {
+                        pstmt.close();
+                    }
+                } catch (Exception ignored) {
+                }
+
+                pstmt = conn.prepareStatement(prepareSql);
+                for (int j = begIndex; j <= endIndex; ++j) {
+                    fixParams(pstmt, paramsList.get(j));
+                    pstmt.addBatch();
+                }
+                // 执行
+                int[] result = pstmt.executeBatch();
+                for (Integer k : result) {
+                    effectiveCount += k;
+                }
+            }
+            return effectiveCount;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            close(conn).close(pstmt);
+        }
         return 0;
     }
 }
