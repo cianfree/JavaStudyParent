@@ -322,7 +322,7 @@ public class DBUtils {
             int effectiveCount = 0;
             for (int i = 0; i < batchPage; ++i) {
                 int begIndex = i * batchSize;
-                int endIndex = i + batchSize - 1;
+                int endIndex = begIndex + batchSize - 1;
                 endIndex = endIndex >= totalSize ? totalSize - 1 : endIndex;
                 try {
                     if (null != pstmt) {
