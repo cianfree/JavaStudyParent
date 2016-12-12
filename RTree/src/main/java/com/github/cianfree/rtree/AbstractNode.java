@@ -12,6 +12,8 @@ public abstract class AbstractNode<SELF> implements INode {
 
     private INode parent;
 
+    private IRange range;
+
     public abstract SELF getSelf();
 
     @Override
@@ -32,5 +34,14 @@ public abstract class AbstractNode<SELF> implements INode {
     public SELF setParent(INode parent) {
         this.parent = parent;
         return getSelf();
+    }
+
+    @Override
+    public IRange getRange() {
+        return range;
+    }
+
+    public void setRange(IRange range) {
+        this.range = range;
     }
 }

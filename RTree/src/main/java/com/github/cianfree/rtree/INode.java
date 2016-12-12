@@ -27,4 +27,9 @@ public interface INode {
      * 获取父节点， 如果没有就返回null
      */
     INode getParent();
+
+    /**
+     * 获取节点范围
+     */
+    IRange getRange();
 }

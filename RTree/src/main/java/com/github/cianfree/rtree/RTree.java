@@ -1,6 +1,7 @@
 package com.github.cianfree.rtree;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -26,7 +27,7 @@ public class RTree implements IRTree {
      *
      * @param checkNode 根节点
      * @param node      要插入的节点
-     * @return 如果为空，返回null
+     * @return 如果为空，返回null, 最终会返回一个叶子节点
      */
     private INode chooseLeafNode(INode checkNode, LeafNode node) {
         if (null == checkNode) {
@@ -78,19 +79,22 @@ public class RTree implements IRTree {
             children.add(node);
             rangeNode.setChildren(children);
             node.setParent(rangeNode);
+            // 设置范围
+            rangeNode.setRange(node.getRange());
             this.root = rangeNode;
         } else {
-            // 判断是否存在 parent 节点
-            INode parentNode = chooseNode.getParent();
-            // 如果是叶子节点
-            if (chooseNode instanceof LeafNode) {
-                parentNode = chooseNode.getParent();
-                if (null == parentNode) {   // 父节点为空，说明是根节点，添加数据
-                    // 检查数量，如果发生溢出，需要进行节点的分化
-                    LeafNode leafNode = LeafNode.class.cast(parentNode);
-
-                }
-            } else {    // 非叶子节点
+            // chooseNode 肯定是叶子节点，因此下面这个肯定不为空
+            RangeNode parentNode = RangeNode.class.cast(chooseNode.getParent());
+            // 检查孩子数量
+            List<INode> children = parentNode.getChildren();
+            if (null == children) {
+                children = new LinkedList<>();
+                parentNode.setChildren(children);
+            }
+            if (children.size() < this.childLimit) {    // 数量小于要限制的数量，可直接添加到有序列表中
+                children.add(node);
+                // 范围合并
+            } else {// 数量大于限制数量，溢出了，需要重新整理树，分化节点
 
             }
         }
