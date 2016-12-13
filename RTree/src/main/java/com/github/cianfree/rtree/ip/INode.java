@@ -6,7 +6,7 @@ import java.util.List;
  * @author Arvin
  * @time 2016/12/12 22:18
  */
-public interface INode<T> {
+public interface INode<T> extends Comparable<INode<T>> {
 
     T getData();
 
@@ -16,9 +16,7 @@ public interface INode<T> {
 
     void setParent(INode<T> parent);
 
-    List<T> getChildren();
-
-    void setChildren(List<INode<T>> children);
+    List<INode<T>> getChildren();
 
     IRange getRange();
 

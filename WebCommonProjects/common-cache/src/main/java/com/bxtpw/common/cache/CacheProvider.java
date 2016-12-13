@@ -3,7 +3,7 @@ package com.bxtpw.common.cache;
 /**
  * 缓存提供者接口
  * 
- * @author 黎杰
+ * @author 夏集球
  * @time 2015年4月27日 下午2:46:06
  * @version 0.1
  * @since 0.1
@@ -13,7 +13,7 @@ public interface CacheProvider {
     /**
      * 删除
      * 
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月27日 下午2:46:24
      * @version 0.1
      * @since 0.1
@@ -25,7 +25,7 @@ public interface CacheProvider {
     /**
      * 返回的是 指定的类型
      * 
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月27日 下午3:04:29
      * @version 0.1
      * @since 0.1
@@ -39,7 +39,7 @@ public interface CacheProvider {
     /**
      * 写入缓存
      * 
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月27日 下午3:26:56
      * @version 0.1
      * @since 0.1

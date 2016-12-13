@@ -31,7 +31,6 @@
         <aspectj.version>1.8.0</aspectj.version>
         <c3p0.version>0.9.1.2</c3p0.version>
         <pagerhelp.version>3.7.4</pagerhelp.version>
-        <c3p0.version>0.9.1.2</c3p0.version>
 	</properties>
 
     <!-- 定义私有仓库 -->

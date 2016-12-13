@@ -13,7 +13,7 @@ import java.io.UnsupportedEncodingException;
 /**
  * redis的缓存实现
  *
- * @author 黎杰
+ * @author 夏集球
  * @version 0.1
  * @time 2015年4月27日 下午2:47:49
  * @since 0.1

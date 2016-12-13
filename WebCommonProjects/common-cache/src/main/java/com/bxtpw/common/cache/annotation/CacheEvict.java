@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 /**
  * 清除缓存
- * @author 黎杰
+ * @author 夏集球
  * @time 2015年4月26日 上午10:02:34
  * @version 0.1
  * @since 0.1
@@ -19,7 +19,7 @@ public @interface CacheEvict {
     /**
      * 缓存中的 key
      * 
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月26日 上午9:29:56
      * @version 0.1
      * @since 0.1
@@ -29,7 +29,7 @@ public @interface CacheEvict {
     
     /**
      * 属性
-    * @author 黎杰
+    * @author 夏集球
     * @time 2015年4月26日 上午11:34:57
     * @version 0.1
     * @since 0.1

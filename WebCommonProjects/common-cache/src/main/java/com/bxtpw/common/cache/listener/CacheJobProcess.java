@@ -23,7 +23,7 @@ import java.util.*;
 /**
  * 处理缓存更新操作
  *
- * @author 黎杰
+ * @author 夏集球
  * @version 0.1
  * @time 2015年6月9日 下午5:09:56
  * @since 0.1
@@ -60,7 +60,7 @@ public class CacheJobProcess implements ApplicationContextAware, Runnable {
     /**
      * 任务调度
      *
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年6月9日 下午3:28:23
      * @version 0.1
      * @since 0.1
@@ -74,7 +74,7 @@ public class CacheJobProcess implements ApplicationContextAware, Runnable {
     /**
      * 读取注解
      *
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年6月9日 下午3:28:38
      * @version 0.1
      * @since 0.1
@@ -156,7 +156,7 @@ public class CacheJobProcess implements ApplicationContextAware, Runnable {
     /**
      * 表操作辅助类
      *
-     * @author 黎杰
+     * @author 夏集球
      * @version 0.1
      * @time 2015年6月8日 下午4:47:29
      * @since 0.1

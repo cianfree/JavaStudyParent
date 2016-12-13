@@ -8,4 +8,5 @@ public interface IRange extends Comparable<IRange> {
 
     IRange merge(IRange range);
 
+    boolean include(IRange range);
 }

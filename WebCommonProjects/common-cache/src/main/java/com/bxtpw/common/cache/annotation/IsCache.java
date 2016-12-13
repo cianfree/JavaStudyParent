@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * 用来根据条件判断是否开启缓存
  * 
- * @author 黎杰
+ * @author 夏集球
  * @time 2015年4月26日 上午9:26:38
  * @version 0.1
  * @since 0.1
@@ -20,7 +20,7 @@ public @interface IsCache {
      * 
      * 是否开启缓存表达式
      * 
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月26日 上午9:29:56
      * @version 0.1
      * @since 0.1

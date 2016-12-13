@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * 缓存切面定义
  *
- * @author 黎杰
+ * @author 夏集球
  * @version 0.1
  * @time 2015年4月26日 上午9:20:07
  * @since 0.1
@@ -51,7 +51,7 @@ public class CacheAspect {
      * @param pjp
      * @return
      * @throws Throwable
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月26日 上午9:35:23
      * @version 0.1
      * @since 0.1
@@ -90,7 +90,7 @@ public class CacheAspect {
      * @param pjps
      * @return
      * @throws Throwable
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月26日 上午9:35:23
      * @version 0.1
      * @since 0.1
@@ -123,7 +123,7 @@ public class CacheAspect {
      * @param pjp
      * @return
      * @throws Throwable
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年6月8日 上午10:57:54
      * @version 0.1
      * @since 0.1
@@ -158,7 +158,7 @@ public class CacheAspect {
     /**
      * @param pjp
      * @throws SQLException
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年5月23日 上午10:51:55
      * @version 0.1
      * @since 0.1
@@ -192,7 +192,7 @@ public class CacheAspect {
     /**
      * 获取目标对象的方法
      *
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月26日 上午9:49:11
      * @version 0.1
      * @since 0.1
@@ -202,7 +202,7 @@ public class CacheAspect {
     /**
      * @param pjp
      * @return
-     * @author 黎杰
+     * @author 夏集球
      * @time 2016年1月14日 下午4:50:35
      * @version 0.1
      * @since 0.1
@@ -241,7 +241,7 @@ public class CacheAspect {
      * @param source
      * @param target
      * @return
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年5月25日 上午11:22:35
      * @version 0.1
      * @since 0.1
@@ -265,7 +265,7 @@ public class CacheAspect {
      * @param source
      * @param target
      * @return
-     * @author 黎杰
+     * @author 夏集球
      * @time 2016年1月14日 下午5:32:17
      * @version 0.1
      * @since 0.1
@@ -289,7 +289,7 @@ public class CacheAspect {
      * @param method
      * @param args
      * @return
-     * @author 黎杰
+     * @author 夏集球
      * @time 2015年4月26日 上午11:35:50
      * @version 0.1
      * @since 0.1

@@ -3,7 +3,7 @@ package com.bxtpw.common.cache.utils;
 /**
  * 缓存辅助 类
  * 
- * @author 黎杰
+ * @author 夏集球
  * @time 2015年5月18日 上午10:48:42
  * @version 0.1
  * @since 0.1
