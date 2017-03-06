@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug">
+
+	<properties>
+        <!-- 
+        <property name="logDir">${web:rootDir}logs</property>
+         -->
+        <!--<property name="logDir">logs</property>-->
+        <property name="pattern">%-5level %logger{3} - %m%n</property>
+    </properties>
+
+	<Appenders>
+		
+		<!-- 控制台输出 -->
+		<Console name="CONSOLE" target="SYSTEM_OUT">
+		    <PatternLayout pattern="${pattern}"/>
+		</Console>
+	</Appenders>
+	<Loggers>
+		<logger name="org.springframework" level="WARN"/>
+	
+		<logger name="org.mybatis.spring" level="WARN"/>
+		
+		<Root level="INFO">
+		  <AppenderRef ref="CONSOLE"/>
+		</Root>
+	</Loggers>
+</Configuration>

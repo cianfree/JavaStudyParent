@@ -13,7 +13,7 @@ public class BaseClient {
 
     protected Jedis jedis;
 
-    protected final String HOST = "192.168.137.90";
+    protected final String HOST = "localhost";
     protected final int PORT = 6379;
     // 超时时间，单位为毫秒
     protected final int TIMEOUT = 1000;

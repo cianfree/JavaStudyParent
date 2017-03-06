@@ -9,7 +9,7 @@
     <context:property-placeholder location="classpath:redis.properties" ignore-unresolvable="true"/>
 
     <!-- Jedis 连接池配置 -->
-    <bean id="jedisConfig" class="org.apache.commons.pool2.impl.GenericObjectPoolConfig">
+    <bean id="jedisConfig" class="org.apache.commons.pool2.service.impl.GenericObjectPoolConfig">
         <property name="maxTotal" value="${redis.pool.maxTotal}"/>
         <property name="maxIdle" value="${redis.pool.maxIdle}"/>
         <property name="maxWaitMillis" value="${redis.pool.maxWaitMillis}"/>
@@ -50,6 +50,6 @@
         <constructor-arg index="1" type="int" value="5000"/>
         <constructor-arg index="2" type="int" value="5000"/>
         <constructor-arg index="3" type="int" value="10"/>
-        <constructor-arg index="4" type="org.apache.commons.pool2.impl.GenericObjectPoolConfig" ref="jedisConfig"/>
+        <constructor-arg index="4" type="org.apache.commons.pool2.service.impl.GenericObjectPoolConfig" ref="jedisConfig"/>
     </bean>
 </beans>

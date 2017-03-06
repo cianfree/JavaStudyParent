@@ -36,7 +36,9 @@
         <module>UtilsClass</module>
         <module>springmvc-study</module>
         <module>IpSearcher</module>
-        <module>RTree</module>
+        <module>SpiderCommon</module>
+        <module>simple-search</module>
+        <module>HibernateStudy</module>
     </modules>
 
     <properties>
@@ -269,6 +271,7 @@
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

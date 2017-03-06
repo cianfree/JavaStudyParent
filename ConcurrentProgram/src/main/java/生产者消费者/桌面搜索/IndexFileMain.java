@@ -33,6 +33,7 @@ public class IndexFileMain {
             new Thread(new FileCrawler(root, fileQueue)).start();
         }
 
+
         // 创建多个消费者
         for (int i = 0; i < CONSUMER_COUNT; ++i) {
             new Thread(new Indexer(fileQueue)).start();

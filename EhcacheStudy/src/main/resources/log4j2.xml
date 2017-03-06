@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="debug">
+
+	<properties>
+        <!-- 
+        <property name="logDir">${web:rootDir}logs</property>
+         -->
+        <!--<property name="logDir">logs</property>-->
+        <property name="pattern">%d{yyyy/MM/dd HH:mm:ss} %-5level %logger{2} - %m%n</property>
+    </properties>
+    
+	<!-- Define custom levels before using them for filtering below. -->
+	<CustomLevels>
+	  <CustomLevel name="DELETE" intLevel="1" />
+	  <CustomLevel name="UPDATE" intLevel="2" />
+	  <CustomLevel name="ADD" intLevel="3" />
+	  <CustomLevel name="NOTICE" intLevel="4" />
+	</CustomLevels>
+	
+	<Appenders>
+		
+		<!-- 控制台输出 -->
+		<Console name="CONSOLE" target="SYSTEM_OUT">
+		    <PatternLayout pattern="${pattern}"/>
+		</Console>
+	  
+		<!--
+			1.SizeBasedTriggeringPolicy size="250 MB"
+			启动服务时，app.log如果文件已经达到250MB就自动转移至2015-06/app-06-12-2015-1.log.gz;
+			运行过程中，app.log每增加250MB就自动备份至2015-06/app-06-12-2015-2.log。
+			
+			2.DefaultRolloverStrategy max="20"
+			2015-06文件夹下的文件最多保留20个，超过20个将把之前的删掉
+		-->
+		<RollingFile name="RollingFile" fileName="${logDir}/app.log"
+		             filePattern="${logDir}/$${date:yyyy-MM}/app-%d{MM-dd-yyyy}-%i.log.gz">
+			<LevelRangeFilter minLevel="FATAL" maxLevel="DEBUG" onMatch="ACCEPT" onMismatch="DENY"/>
+			<PatternLayout>
+			<Pattern>${pattern}</Pattern>
+			</PatternLayout>
+			<Policies>
+			<SizeBasedTriggeringPolicy size="250 MB"/>
+			</Policies>
+			<DefaultRolloverStrategy max="20"/>
+		</RollingFile>
+	  
+	</Appenders>
+	<Loggers>
+		<logger name="org.springframework" level="WARN"/>
+	
+		<logger name="org.mybatis.spring" level="WARN"/>
+		
+		<Root level="DEBUG">
+		  <AppenderRef ref="CONSOLE"/>
+		</Root>
+	</Loggers>
+</Configuration>

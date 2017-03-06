@@ -2,6 +2,7 @@ package 构建高效且可伸缩的结果缓存;
 
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <pre>

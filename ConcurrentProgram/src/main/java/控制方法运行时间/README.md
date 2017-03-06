@@ -1,0 +1,3 @@
+
+在某些情况下需要控制方法的运行时间，通过Thread+Callable+FutureTask完成，
+Thread用于新开线程运行指定方法，Callable和FutrueTask用于监控方法运行时间。

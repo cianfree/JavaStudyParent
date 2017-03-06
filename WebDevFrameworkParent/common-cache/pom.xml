@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>WebDevFrameworkParent</artifactId>
+        <groupId>edu.zhku</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cn.arvin.common</groupId>
+    <artifactId>common-cache</artifactId>
+
+    <packaging>jar</packaging>
+
+    <properties>
+        <central.repo.url>http://localhost:9999/repository/maven-public/</central.repo.url>
+        <mvn.center.url>https://repo1.maven.org/maven2/</mvn.center.url>
+        <oschina.repo.url>http://maven.oschina.net/content/groups/public/</oschina.repo.url>
+        <privice.repo.url>http://localhost:9999/repository/maven-public/</privice.repo.url>
+        <repo.release.url>http://localhost:9999/repository/maven-public/</repo.release.url>
+        <repo.snapshots.url>http://localhost:9999/repository/arvin-snapshots/</repo.snapshots.url>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <source.version>1.7</source.version>
+        <target.version>1.7</target.version>
+        <compiler.version>1.7</compiler.version>
+
+        <junit.version>4.11</junit.version>
+        <spring.version>4.1.6.RELEASE</spring.version>
+        <aspectj.version>1.8.0</aspectj.version>
+        <spring.redis.version>1.4.2.RELEASE</spring.redis.version>
+        <jedis.version>2.6.2</jedis.version>
+        <commons.logging.version>1.1</commons.logging.version>
+        <commons.lang3.version>3.1</commons.lang3.version>
+        <slf4j.version>1.7.5</slf4j.version>
+        <log4j.version>1.2.17</log4j.version>
+    </properties>
+
+    <!-- 定义私有仓库 -->
+    <repositories>
+        <repository>
+            <id>central</id>
+            <name>Centran repository</name>
+            <url>${central.repo.url}</url>
+        </repository>
+    </repositories>
+
+    <!--发布库 mvn clean deploy -->
+    <distributionManagement>
+        <repository>
+            <id>arvin-releases</id>
+            <name>Common Nexus Release Repository</name>
+            <url>${repo.release.url}</url>
+        </repository>
+        <snapshotRepository>
+            <id>arvin-snapshots</id>
+            <name>Common Nexus Snapshot Repository</name>
+            <url>${repo.snapshots.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
+
+</project>

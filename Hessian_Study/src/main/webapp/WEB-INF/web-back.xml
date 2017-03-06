@@ -15,7 +15,7 @@
         <!-- 配置接口的具体实现类 -->
         <init-param>
             <param-name>service-class</param-name>
-            <param-value>edu.zhku.hessian.service.impl.UserServiceImpl</param-value>
+            <param-value>edu.zhku.hessian.service.service.impl.UserServiceImpl</param-value>
         </init-param>
     </servlet>
 
@@ -26,7 +26,7 @@
         <!-- 配置接口的具体实现类 -->
         <init-param>
             <param-name>service-class</param-name>
-            <param-value>edu.zhku.hessian.service.impl.RoleServiceImpl</param-value>
+            <param-value>edu.zhku.hessian.service.service.impl.RoleServiceImpl</param-value>
         </init-param>
     </servlet>
 

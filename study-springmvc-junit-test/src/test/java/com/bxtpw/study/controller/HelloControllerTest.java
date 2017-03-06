@@ -46,7 +46,7 @@ public class HelloControllerTest {
     @ExceptionHandler(NumberFormatException.class)
     public void testSayHello() throws Exception {
 
-        ResultActions actions = mockMvc.perform(post("/sayHello?name=arvin"));
+        ResultActions actions = mockMvc.perform(post("/sayHello").param("name", "arvin"));
         System.out.println(actions.toString());
         MvcResult result = actions.andReturn();
         System.out.println(JSON.toJSONString(result.getModelAndView()));

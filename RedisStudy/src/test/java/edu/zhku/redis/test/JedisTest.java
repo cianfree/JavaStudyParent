@@ -2,6 +2,7 @@ package edu.zhku.redis.test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -47,7 +48,32 @@ public class JedisTest {
     }
 
     @Test
+    public void testApi() {
+        //jedis.bitcount("key")
+        //jedis.setbit()
+        //List<String> resultList = jedis.mget("a", "b", "c");
+
+        //jedis.mset()
+
+        //jedis.psetex()
+
+        //jedis.hdel()
+
+        //Map<String, String> resultMap = jedis.hgetAll();
+
+        //jedis.lpush()
+
+        //jedis.sadd()
+        //jedis.sdiff()
+        //jedis.scard()
+        //jedis.sdiffstore()
+
+        //jedis.multi()
+    }
+
+    @Test
     public void test1Normal() {
+
         long start = System.currentTimeMillis();
         for (int i = 0; i < 100000; i++) {
             String result = jedis.set("n" + i, "n" + i);

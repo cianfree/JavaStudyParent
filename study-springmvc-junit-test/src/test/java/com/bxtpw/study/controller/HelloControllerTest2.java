@@ -60,4 +60,11 @@ public class HelloControllerTest2 {
             e.printStackTrace();
         }
     }
+
+    public static void main(String[] args) {
+        Double d = 3.2;
+        Double old = d;
+        d = 2.3;
+        System.out.println(old == d);
+    }
 }

@@ -15,6 +15,10 @@ public class PubAndSubTest extends BaseClient {
 
     private final String topic = "user*";
 
+    /**
+     * 订阅接口
+     * @throws InterruptedException
+     */
     @Test
     public void testSubscribe() throws InterruptedException {
         // 订阅
@@ -51,15 +55,19 @@ public class PubAndSubTest extends BaseClient {
         };
         logger.info("准备订阅！");
         jedis.psubscribe(pubSub, topic);
+        jedis.close();
         logger.info("Subscribe!");
     }
 
+    /**
+     * 发布接口
+     */
     @Test
     public void testPublish() {
         // 发布
-        jedis.publish("user1", "admin");
-        jedis.publish("user2", "admin");
-        jedis.publish("user3", "admin");
+        jedis.publish("user", "admin1");
+        jedis.publish("user", "admin2");
+        jedis.publish("user", "admin3");
         logger.info("Publish channel: content");
     }
 }

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hibernate-mapping xmlns="http://www.hibernate.org/xsd/hibernate-mapping"
+                   auto-import="true" catalog="hibernate" package="com.github.cianfree.model">
+
+  <class name="Student" table="student">
+    <id column="id" name="id" type="java.lang.Long">
+      <generator class="increment"/>
+    </id>
+    <property name="age" column="age" type="java.lang.Integer"/>
+    <property name="name" column="name" type="java.lang.String"/>
+  </class>
+</hibernate-mapping>

@@ -13,7 +13,7 @@
 
     <dubbo:application name="provider-dubboTest"/>
 
-    <context:component-scan base-package="edu.zhku.dubbo.service.impl"/>
+    <context:component-scan base-package="edu.zhku.dubbo.service.service.impl"/>
 
     <!--
     <dubbo:annotation package="dp.dubbo.service" /> -->
