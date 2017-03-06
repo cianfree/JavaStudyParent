@@ -16,7 +16,7 @@ import static org.junit.Assert.*;
  * @time 2017/2/28 11:14
  */
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration({"classpath:applicationContext.xml"})
+@ContextConfiguration({"classpath:applicationContext-inject.xml"})
 public class HelloServiceTest {
 
     @Autowired

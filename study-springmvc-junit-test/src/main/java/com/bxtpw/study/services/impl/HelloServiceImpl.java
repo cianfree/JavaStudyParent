@@ -1,5 +1,6 @@
 package com.bxtpw.study.services.impl;
 
+import com.bxtpw.study.annotation.LogAnn;
 import com.bxtpw.study.services.HelloService;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class HelloServiceImpl implements HelloService {
     }
 
     @Override
+    @LogAnn(value = "DEBUG")
     public String getWelcome(String name) {
         return "Hello, " + name + "! Welcome to China!";
     }
