@@ -28,7 +28,7 @@
 
     <!-- 映射文件 -->
     <mapping resource="com/github/cianfree/model/Student.hbm.xml" />
-    <mapping class="com.github.cianfree.model.Admin"/>
+    <mapping class="com.github.cianfree.message.Admin"/>
 
   </session-factory>
 

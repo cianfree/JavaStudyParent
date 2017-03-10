@@ -1,4 +1,4 @@
-package com.github.cianfree.model;
+package com.github.cianfree.message;
 
 /**
  * @author Arvin

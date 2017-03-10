@@ -39,6 +39,8 @@
         <module>SpiderCommon</module>
         <module>simple-search</module>
         <module>HibernateStudy</module>
+        <module>RPCStudy</module>
+        <module>rabbitmq-study-parent</module>
     </modules>
 
     <properties>

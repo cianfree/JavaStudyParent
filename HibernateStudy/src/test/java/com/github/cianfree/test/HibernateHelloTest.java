@@ -1,8 +1,8 @@
 package com.github.cianfree.test;
 
 import com.alibaba.fastjson.JSON;
-import com.github.cianfree.model.Admin;
-import com.github.cianfree.model.Student;
+import com.github.cianfree.message.Admin;
+import com.github.cianfree.message.Student;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;

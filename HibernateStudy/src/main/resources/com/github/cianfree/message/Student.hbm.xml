@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <hibernate-mapping xmlns="http://www.hibernate.org/xsd/hibernate-mapping"
-                   auto-import="true" catalog="hibernate" package="com.github.cianfree.model">
+                   auto-import="true" catalog="hibernate" package="com.github.cianfree.message">
 
   <class name="Student" table="student">
     <id column="id" name="id" type="java.lang.Long">
